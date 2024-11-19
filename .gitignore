@@ -1,0 +1,6 @@
+# Virtual environment
+.winvenv
+./winvenv
+
+# Results folder
+./results/
