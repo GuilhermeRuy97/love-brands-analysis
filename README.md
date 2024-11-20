@@ -1,5 +1,4 @@
 # Love Brands Analysis: Consumer Brand Perception Study
-
 Research analyzing how consumers in Poços de Caldas (MG, Brazil) perceive and connect with their preferred brands. This academic study examines correlations between demographic variables and brand relationships through statistical analysis.
 
 # Steps to run the project
@@ -32,7 +31,6 @@ Research analyzing how consumers in Poços de Caldas (MG, Brazil) perceive and c
 - Q20: What attracts you most about the brand you chose?
 
 # Data Source:
-
 - The population estimated by IBGE for Poços de Caldas in 2024 is 171533.
 - Children must be disregarded from the total population so as not to have a population bias that cannot consume on their own. Therefore, the estimate of 16.33% of the total population (under 14 years old) is disregarded.
 - The considered population of Poços de Caldas is 143,500.
@@ -41,3 +39,15 @@ The sample space of the population of Poços de Caldas is 500 (500 people were s
 - Given the following margin of error formula for proportions in finite populations:
 ![margin of error formula](./assets/margin-of-error-formula.png)
 - We have that the margin of error is approximately: 4.32%
+
+# Output (result files)
+This will create a statistical_analysis.txt file that categorizes relationships into three groups:
+1. Strong and Significant: p < 0.05 AND V > 0.3
+- Most reliable relationships
+- Both statistically significant and strong association
+2. Significant but Weak: p < 0.05 BUT V ≤ 0.3
+- Real relationship exists
+- But the association is weak
+3. Strong but Not Significant: p ≥ 0.05 BUT V > 0.3
+- Strong association appears
+- But could be due to chance/small sample size

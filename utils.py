@@ -5,6 +5,8 @@ import warnings
 warnings.filterwarnings('ignore')
 from scipy.stats import chi2_contingency, kruskal
 from datetime    import datetime
+from scipy import stats
+from typing import Dict, List
 
 def cramers_v(x, y):
     """
@@ -155,3 +157,100 @@ def save_results(results, base_dir="results"):
                 f.write(f"(V={result['coefficient']:.2f})\n")
 
     print(f"\nResults saved to: {filename}")
+
+def validate_sample_size(df: pd.DataFrame) -> None:
+    """
+    Validate if sample size meets statistical requirements
+    
+    Args:
+        df: DataFrame with survey data
+    """
+    total_population = 143500
+    sample_size = len(df)
+    margin_error = 0.0432
+    confidence_level = 0.95
+    
+    z_score = stats.norm.ppf(1 - (1 - confidence_level) / 2)
+    required_size = (z_score**2 * 0.25 * total_population) / (
+        (margin_error**2 * (total_population - 1)) + (z_score**2 * 0.25)
+    )
+    
+    print(f"\nSample Size Validation:")
+    print(f"Required minimum: {required_size:.0f}")
+    print(f"Actual sample: {sample_size}")
+    print(f"Margin of Error: {margin_error*100:.2f}%")
+
+def generate_conclusion(results: Dict) -> str:
+    """
+    Generate comprehensive statistical conclusions
+    
+    Args:
+        results: Dictionary containing statistical test results
+    
+    Returns:
+        str: Formatted conclusion text
+    """
+    conclusion = "\nSTATISTICAL ANALYSIS RESULTS\n" + "="*50 + "\n\n"
+    
+    # Count relationship types
+    strong_significant = []
+    weak_significant = []
+    strong_nonsignificant = []
+    total_relationships = len(results['chi_square'])
+    
+    for chi in results['chi_square']:
+        vars = (chi['independent'], chi['dependent'])
+        cramer = next(c for c in results['cramers_v'] 
+                     if c['independent'] == vars[0] and c['dependent'] == vars[1])
+        
+        if chi['p_value'] < 0.05:
+            if cramer['coefficient'] > 0.3:
+                strong_significant.append({
+                    'vars': vars,
+                    'p': chi['p_value'],
+                    'v': cramer['coefficient']
+                })
+            else:
+                weak_significant.append({
+                    'vars': vars,
+                    'p': chi['p_value'],
+                    'v': cramer['coefficient']
+                })
+        elif cramer['coefficient'] > 0.3:
+            strong_nonsignificant.append({
+                'vars': vars,
+                'p': chi['p_value'],
+                'v': cramer['coefficient']
+            })
+
+    # Summary statistics
+    conclusion += f"Total Relationships Analyzed: {total_relationships}\n"
+    conclusion += f"Strong & Significant: {len(strong_significant)}\n"
+    conclusion += f"Weak but Significant: {len(weak_significant)}\n"
+    conclusion += f"Strong but Not Significant: {len(strong_nonsignificant)}\n\n"
+
+    # Detailed findings
+    if strong_significant:
+        conclusion += "STRONG & SIGNIFICANT RELATIONSHIPS (p < 0.05, V > 0.3):\n"
+        conclusion += "-"*50 + "\n"
+        for r in strong_significant:
+            conclusion += f"• {r['vars'][0]} → {r['vars'][1]}\n"
+            conclusion += f"  p={r['p']:.4f}, V={r['v']:.2f}\n"
+        conclusion += "\n"
+    
+    if weak_significant:
+        conclusion += "SIGNIFICANT BUT WEAK RELATIONSHIPS (p < 0.05, V ≤ 0.3):\n"
+        conclusion += "-"*50 + "\n"
+        for r in weak_significant:
+            conclusion += f"• {r['vars'][0]} → {r['vars'][1]}\n"
+            conclusion += f"  p={r['p']:.4f}, V={r['v']:.2f}\n"
+        conclusion += "\n"
+    
+    if strong_nonsignificant:
+        conclusion += "STRONG BUT NOT SIGNIFICANT RELATIONSHIPS (p ≥ 0.05, V > 0.3):\n"
+        conclusion += "-"*50 + "\n"
+        for r in strong_nonsignificant:
+            conclusion += f"• {r['vars'][0]} → {r['vars'][1]}\n"
+            conclusion += f"  p={r['p']:.4f}, V={r['v']:.2f}\n"
+
+    return conclusion
